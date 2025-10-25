@@ -58,6 +58,7 @@ def setup_lm(args):
         num_model_instances=args.num_model_instances,
         gpu_memory_utilization=args.gpu_memory_utilization,
         max_model_len=args.max_model_len,
+        max_num_seqs=args.max_num_seqs,
         temperature=args.temperature,
         max_tokens=args.max_tokens,
         top_p=args.top_p,
@@ -345,6 +346,12 @@ def main():
         type=float,
         default=0.95,
         help="Nucleus sampling parameter"
+    )
+    inference_group.add_argument(
+        "--max-num-seqs",
+        type=int,
+        default=128,
+        help="Maximum number of sequences (requests) to process in parallel in vLLM"
     )
     inference_group.add_argument(
         "--num-rollouts",

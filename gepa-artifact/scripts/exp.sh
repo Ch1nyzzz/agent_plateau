@@ -1,10 +1,11 @@
 #!/bin/bash
 # ========================================
 # GEPA Experiment - Ray + vLLM Optimized
-# 针对 4 卡 GPU 的最优配置
 # ========================================
-
-cd /home/yuhan/ReAct_learning/gepa-artifact
+# 取消 RAY_ADDRESS 以确保启动新的集群而不是连接到现有集群
+unset RAY_ADDRESS
+export VLLM_TORCH_COMPILE=0
+cd /home/yuhan/ReAct_learning/agent_plateau/gepa-artifact
 source /home/yuhan/cyh_dev/bin/activate
 
 # ========================================
@@ -22,18 +23,42 @@ export PYTHONWARNINGS="ignore:os.fork:RuntimeWarning"
 export JAX_PLATFORMS=""
 
 # ========================================
-# 最优配置 - 4 卡 GPU + 8B 模型
+# 可配置参数 - 在这里修改实验配置
 # ========================================
-# Tensor Parallel: 1 (每个模型实例用 1 张 GPU，8B 模型单卡足够)
-# Data Parallel: 4 (运行 4 个模型实例，最大化吞吐量)
-# 预期吞吐量提升: ~4x
+
+# GPU 配置
+TENSOR_PARALLEL_SIZE=2      # 每个模型实例使用的 GPU 数量(张量并行)
+NUM_MODEL_INSTANCES=1       # 模型实例数量(数据并行)
+
+# vLLM 推理配置
+GPU_MEMORY_UTIL=0.85        # GPU 显存利用率 (0.0-1.0) - 稍微增加
+MAX_MODEL_LEN=8192          # 最大模型序列长度 - 降低以节省KV cache显存
+MAX_NUM_SEQS=1            # 最大并行处理序列数 - 降低以节省显存
+TEMPERATURE=0.6             # 采样温度
+MAX_TOKENS=8192             # 最大生成 token 数
+TOP_P=0.95                  # Top-p 采样参数
+
+# 实验配置
+BENCHMARK="aime"            # 基准测试: aime, lb_math, hover, papillon, hotpotqa, ifbench
+NUM_EVAL_THREADS=1         # 评估线程数
+NUM_OPTIMIZE_THREADS=1     # 优化线程数
+
+# ========================================
+# 运行实验
+# ========================================
 
 python scripts/exp.py \
-    --tensor-parallel-size 1 \
-    --num-model-instances 2 \
-    --benchmark aime \
-    --num-eval-threads 64 \
-    --num-optimize-threads 80
+    --tensor-parallel-size $TENSOR_PARALLEL_SIZE \
+    --num-model-instances $NUM_MODEL_INSTANCES \
+    --gpu-memory-utilization $GPU_MEMORY_UTIL \
+    --max-model-len $MAX_MODEL_LEN \
+    --max-num-seqs $MAX_NUM_SEQS \
+    --temperature $TEMPERATURE \
+    --max-tokens $MAX_TOKENS \
+    --top-p $TOP_P \
+    --benchmark $BENCHMARK \
+    --num-eval-threads $NUM_EVAL_THREADS \
+    --num-optimize-threads $NUM_OPTIMIZE_THREADS
 
 # ========================================
 # 其他配置示例
