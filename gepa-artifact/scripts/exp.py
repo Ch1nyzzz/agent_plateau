@@ -17,7 +17,7 @@ from pathlib import Path
 import dspy
 
 # Import optimized Ray + vLLM adapter
-from gepa_artifact.utils.vllm_dspy_adapter import vLLMOfflineHybridParallel
+from gepa_artifact.utils.vllm_dspy_adapter import vLLMOfflineHybridParallel, vLLMOfflineSimple
 
 # Import benchmark modules
 from gepa_artifact.benchmarks.AIME import benchmark as aime_metas
@@ -50,19 +50,32 @@ def setup_lm(args):
     print(f"  Model Instances: {args.num_model_instances} (数据并行，运行 {args.num_model_instances} 个模型副本)")
     print(f"  总 GPU 使用: {total_gpus} 张")
     print(f"  预期吞吐量提升: ~{args.num_model_instances}x")
-
-    # 初始化 Ray + vLLM 混合并行推理
-    lm = vLLMOfflineHybridParallel(
-        model=args.model_path,
-        tensor_parallel_size=args.tensor_parallel_size,
-        num_model_instances=args.num_model_instances,
-        gpu_memory_utilization=args.gpu_memory_utilization,
-        max_model_len=args.max_model_len,
-        max_num_seqs=args.max_num_seqs,
-        temperature=args.temperature,
-        max_tokens=args.max_tokens,
-        top_p=args.top_p,
-    )
+    if args.use_simple:
+        print("使用简单版本")
+        lm = vLLMOfflineSimple(
+            model=args.model_path,
+            tensor_parallel_size=args.tensor_parallel_size,
+            gpu_memory_utilization=args.gpu_memory_utilization,
+            max_model_len=args.max_model_len,
+            max_num_seqs=args.max_num_seqs,
+            temperature=args.temperature,
+            max_tokens=args.max_tokens,
+            top_p=args.top_p,
+        )
+    else:
+        # 初始化 Ray + vLLM 混合并行推理
+        print("使用混合并行版本")
+        lm = vLLMOfflineHybridParallel(
+            model=args.model_path,
+            tensor_parallel_size=args.tensor_parallel_size,
+            num_model_instances=args.num_model_instances,
+            gpu_memory_utilization=args.gpu_memory_utilization,
+            max_model_len=args.max_model_len,
+            max_num_seqs=args.max_num_seqs,
+            temperature=args.temperature,
+            max_tokens=args.max_tokens,
+            top_p=args.top_p,
+        )
 
     # Configure DSPy
     dspy.configure(lm=lm)
@@ -148,7 +161,6 @@ def evaluate_program(program, cur_meta, bench, args, stage="base"):
         print(f"\nConfiguring {args.num_rollouts} rollouts per prompt")
         # Configure the language model to generate multiple outputs
         # This is done by setting the 'n' parameter in the LM kwargs
-        import dspy
         lm = dspy.settings.lm
         if lm is not None:
             # Store original config
@@ -319,6 +331,12 @@ def main():
         type=float,
         default=0.8,
         help="GPU memory utilization (0.0-1.0)"
+    )
+    model_group.add_argument(
+        "--use-simple",
+        type=int,
+        default=0,
+        help="Use simple vLLM version (without Ray). 0: 不使用，1: 使用"
     )
 
     # Inference parameters

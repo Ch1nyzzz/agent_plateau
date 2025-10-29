@@ -1,3 +1,11 @@
+# Large data files
+*.tar.gz
+wiki.abstracts.2017.jsonl
+gepa_artifact/benchmarks/hover/wiki.abstracts.2017.jsonl
+gepa_artifact/benchmarks/hover/bm25s_retriever/*.npy
+gepa_artifact/benchmarks/hover/bm25s_retriever/vocab.index.json
+gepa_artifact/benchmarks/IFBench/data/IFBench_train.jsonl
+
 .vscode/
 experiment_runs_data/
 gepa_artifact/utils/dspy/

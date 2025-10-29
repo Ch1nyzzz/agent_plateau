@@ -10,10 +10,10 @@ import ray
 
 
 # ============================================================
-# 混合并行版本（张量并行 + 数据并行）
+# 混合并行版本（张量并行 + 数据并行，使用 Ray）
 # ============================================================
 
-class vLLMOfflineHybridParallel:
+class vLLMOfflineHybridParallel(dspy.BaseLM):
     
     def __init__(
         self,
@@ -21,11 +21,11 @@ class vLLMOfflineHybridParallel:
         tensor_parallel_size: int = 2,
         num_model_instances: int = 2,
         gpu_memory_utilization: float = 0.9,
-        max_model_len: int = 32768,
+        max_model_len: int = 4096,
         max_num_seqs: int = 128,
         trust_remote_code: bool = True,
         temperature: float = 0.6,
-        max_tokens: int = 16384,
+        max_tokens: int = 4096,
         top_p: float = 0.95,
         **kwargs,
     ):
@@ -45,6 +45,7 @@ class vLLMOfflineHybridParallel:
             top_p: 默认top_p值
         """
         self.model_path = model or os.environ.get('VLLM_MODEL_PATH', '/home/yuhan/model_zoo/Qwen3-8B')
+        super().__init__(model=self.model_path)
         self.tensor_parallel_size = tensor_parallel_size
         self.num_model_instances = num_model_instances
         self.max_num_seqs = max_num_seqs
@@ -125,8 +126,11 @@ class vLLMOfflineHybridParallel:
                 start_time = time.time()
 
                 # 设置这个 Actor 可见的 GPU
-                os.environ['CUDA_VISIBLE_DEVICES'] = ','.join(map(str, gpu_ids))
-
+                #os.environ['CUDA_VISIBLE_DEVICES'] = ','.join(map(str, gpu_ids))
+                # 让 Ray 自己设置 CUDA_VISIBLE_DEVICES；如需检查，用 ray.get_gpu_ids() 打印即可
+                import ray as _ray
+                print(f"[Actor #{instance_id}] ray.get_gpu_ids()={_ray.get_gpu_ids()}, "
+                      f"CUDA_VISIBLE_DEVICES={os.environ.get('CUDA_VISIBLE_DEVICES')}")
                 print(f"[Ray Actor #{instance_id}] 开始在 GPU {gpu_ids} 上加载模型...")
                 print(f"[Ray Actor #{instance_id}] 模型路径: {model_path}")
                 print(f"[Ray Actor #{instance_id}] 这可能需要 1-3 分钟，请耐心等待...")
@@ -135,11 +139,12 @@ class vLLMOfflineHybridParallel:
                     model=model_path,
                     tensor_parallel_size=tensor_parallel_size,
                     gpu_memory_utilization=gpu_memory_utilization,
+                    distributed_executor_backend="mp",  # 使用多进程模式
                     max_model_len=max_model_len,
                     trust_remote_code=trust_remote_code,
                     max_num_seqs=max_num_seqs,
                     # 减少初始化时的详细输出
-                    disable_log_stats=True,
+                    disable_log_stats=False,
                 )
 
                 self.gpu_ids = gpu_ids
@@ -405,206 +410,3 @@ class vLLMOfflineHybridParallel:
         except:
             pass
 
-
-# ============================================================
-# 使用示例
-# ============================================================
-
-def example_basic():
-    """示例1：基础推理"""
-    print("=" * 60)
-    print("示例1: 基础推理")
-    print("=" * 60)
-
-    # 创建 vLLM 离线推理适配器
-    lm = vLLMOffline(
-        model="/home/yuhan/model_zoo/Qwen3-8B",
-        temperature=0.6,
-        max_tokens=200,
-    )
-
-    # 配置 DSPy
-    dspy.configure(lm=lm)
-
-    print("\n单个推理:")
-    result = lm("什么是深度学习？请用一句话回答。")
-    print(f"回答: {result[0]}")
-
-
-def example_batch():
-    """示例2：批量推理"""
-    print("=" * 60)
-    print("示例2: 批量推理（数据并行）")
-    print("=" * 60)
-
-    lm = vLLMOffline()
-
-    prompts = [
-        "1+1=?",
-        "2+2=?",
-        "3+3=?",
-        "Python中如何定义函数？",
-        "什么是transformer？",
-    ]
-
-    import time
-    start = time.time()
-    results = lm.batch_generate(prompts, max_tokens=100)
-    end = time.time()
-
-    print(f"\n批量推理 {len(prompts)} 个问题，耗时: {end-start:.2f}秒")
-    for prompt, result in zip(prompts, results):
-        print(f"\n问题: {prompt}")
-        print(f"回答: {result.strip()[:100]}...")
-
-
-def example_benchmark():
-    """示例3：在 benchmark 评估中使用（模拟 notebook）"""
-    print("=" * 60)
-    print("示例3: Benchmark 评估（模拟 notebook）")
-    print("=" * 60)
-
-    # 1. 初始化 vLLM 离线推理
-    lm = vLLMOffline(
-        temperature=0.6,
-        max_tokens=15000,  # 与 notebook 一致
-        top_p=0.95,
-    )
-
-    # 2. 配置 DSPy
-    dspy.configure(lm=lm)
-
-    # 3. 加载 benchmark（这里使用简单示例）
-    print("\n加载 benchmark...")
-    from gepa_artifact.benchmarks.AIME import benchmark as aime_metas
-
-    cur_meta = aime_metas
-    bench = cur_meta[0].benchmark()
-
-    print(f"训练集大小: {len(bench.train_set)}")
-    print(f"验证集大小: {len(bench.val_set)}")
-    print(f"测试集大小: {len(bench.test_set)}")
-
-    # 4. 加载 program
-    print("\n加载 program...")
-    program = cur_meta[0].program[0]
-    print(program)
-
-    # 5. 定义评估器
-    print("\n创建评估器...")
-    evaluate = dspy.Evaluate(
-        devset=bench.test_set[:5],  # 只评估前5个样本作为演示
-        metric=cur_meta[0].metric,
-        num_threads=4,  # 多线程评估
-        display_table=True,
-        display_progress=True,
-        max_errors=100,
-    )
-
-    # 6. 评估程序
-    print("\n开始评估...")
-    score = evaluate(program)
-    print(f"\n最终得分: {score}")
-
-
-def example_multi_gpu():
-    """示例4：多GPU数据并行"""
-    print("=" * 60)
-    print("示例4: 多GPU数据并行推理（4张GPU）")
-    print("=" * 60)
-
-    # 初始化多GPU数据并行
-    lm = vLLMOfflineMultiGPU(
-        model="/home/yuhan/model_zoo/Qwen3-8B",
-        num_gpus=4,  # 使用4张GPU
-        temperature=0.6,
-        max_tokens=500,
-    )
-
-    # 配置 DSPy
-    dspy.configure(lm=lm)
-
-    # 准备大量问题（模拟真实场景）
-    print("\n生成测试数据...")
-    prompts = []
-    for i in range(100):
-        prompts.append(f"请计算 {i} + {i+1} 等于多少？只回答数字。")
-
-    # 批量推理 - 数据会自动分配到4张GPU
-    print(f"\n开始批量推理 {len(prompts)} 个问题...")
-    import time
-    start = time.time()
-    results = lm.batch_generate(prompts, max_tokens=100)
-    end = time.time()
-
-    print(f"\n✓ 批量推理完成！")
-    print(f"总耗时: {end-start:.2f} 秒")
-    print(f"平均每个问题: {(end-start)/len(prompts):.3f} 秒")
-    print(f"吞吐量: {len(prompts)/(end-start):.1f} 问题/秒")
-
-    # 显示前5个结果
-    print(f"\n前5个结果:")
-    for i in range(5):
-        print(f"  问题: {prompts[i]}")
-        print(f"  回答: {results[i].strip()[:50]}")
-
-    # 查看配置信息
-    print(f"\n配置信息:")
-    print(lm.inspect())
-
-
-def example_dspy_signature():
-    """示例5：在 DSPy Signature 中使用"""
-    print("=" * 60)
-    print("示例5: 在 DSPy Signature 中使用")
-    print("=" * 60)
-
-    lm = vLLMOffline()
-    dspy.configure(lm=lm)
-
-    # 定义 Signature
-    class QA(dspy.Signature):
-        """回答问题"""
-        question = dspy.InputField(desc="问题")
-        answer = dspy.OutputField(desc="答案")
-
-    # 使用 ChainOfThought
-    qa_module = dspy.ChainOfThought(QA)
-
-    # 推理
-    questions = [
-        "什么是注意力机制？",
-        "解释一下什么是vLLM？",
-    ]
-
-    for question in questions:
-        prediction = qa_module(question=question)
-        print(f"\n问题: {question}")
-        print(f"答案: {prediction.answer[:200]}...")
-
-
-if __name__ == "__main__":
-    import sys
-
-    # 根据命令行参数选择运行哪个示例
-    if len(sys.argv) > 1:
-        example_name = sys.argv[1]
-        if example_name == "basic":
-            example_basic()
-        elif example_name == "batch":
-            example_batch()
-        elif example_name == "benchmark":
-            example_benchmark()
-        elif example_name == "multigpu":
-            example_multi_gpu()
-        elif example_name == "signature":
-            example_dspy_signature()
-        else:
-            print(f"未知示例: {example_name}")
-            print("可用示例: basic, batch, benchmark, multigpu, signature")
-    else:
-        # 默认运行基础示例
-        print("提示: 可以使用 'python vllm_dspy_adapter.py [示例名]' 运行特定示例")
-        print("可用示例: basic, batch, benchmark, multigpu, signature")
-        print("\n【推荐】如果你有多张GPU，使用: python vllm_dspy_adapter.py multigpu\n")
-        example_basic()

@@ -5,6 +5,12 @@ import time
 import json
 import traceback
 import random
+from pathlib import Path
+
+# Load environment variables from .env file
+from dotenv import load_dotenv
+dotenv_path = Path(__file__).parent / '.env'
+load_dotenv(dotenv_path=dotenv_path)
 
 from gepa_artifact.utils.capture_stream_logger import Logger
 from .experiment_configs import BASE_EXPERIMENT_DIR, get_benchmarks, get_optimizers, get_max_invocations
@@ -158,6 +164,13 @@ def run_experiment_and_write_results_actual(
     benchmark = benchmark_meta.benchmark()
 
     optimizer_config.langProBe_configs['launch_arbor'] = False
+
+    # Handle {portnum} placeholder when not launching arbor
+    if "{portnum}" in lm_config.get("api_base", ""):
+        # Use the port from environment variable or default to 8000
+        vllm_port = os.environ.get("VLLM_PORT", "8000")
+        lm_config["api_base"] = lm_config["api_base"].format(portnum=vllm_port)
+        print(f"Using VLLM port {vllm_port} for api_base: {lm_config['api_base']}")
 
     if use_cache_from_opt is not None:
         assert "use_cache_from_opt" in optimizer_config.langProBe_configs
