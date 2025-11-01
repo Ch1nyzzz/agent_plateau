@@ -2,6 +2,7 @@ import os
 import subprocess
 import time
 import uuid
+from pathlib import Path
 
 class ArborRunner:
     """
@@ -19,19 +20,23 @@ class ArborRunner:
         port_num = str(self.portnum)
         output_log_filename = os.path.join(self.rundirname, "arbor_logs.txt")
 
-        # Construct the command to be run inside tmux
-        if os.environ.get("WANDB_API_KEY") is None:
-            command_to_run_in_tmux = (
-                f"source env.sh && "
-                f"uv run python -u -m arbor.cli serve --arbor-config {self.config_filepath} --port {port_num} "
-                f"|& tee -a {output_log_filename}; bash"
-            )
-        else:
-            command_to_run_in_tmux = (
-                f"source env.sh  && export WANDB_API_KEY={os.environ.get('WANDB_API_KEY')} && "
-                f"uv run python -u -m arbor.cli serve --arbor-config {self.config_filepath} --port {port_num} "
-                f"|& tee -a {output_log_filename}; bash"
-            )
+        repo_root = Path(__file__).resolve().parents[2]
+        arbor_python_path = repo_root / "gepa_artifact" / "utils" / "arbor"
+
+        prefix_parts = [
+            "source env.sh",
+            f'export PYTHONPATH="{arbor_python_path}:{{PYTHONPATH:-}}"',
+        ]
+        if os.environ.get("WANDB_API_KEY") is not None:
+            prefix_parts.append(f"export WANDB_API_KEY={os.environ.get('WANDB_API_KEY')}")
+
+        prefix = " && ".join(prefix_parts)
+        server_cmd = (
+            f"python -u -m arbor.cli serve --arbor-config {self.config_filepath} --port {port_num} "
+            f"|& tee -a {output_log_filename}; bash"
+        )
+
+        command_to_run_in_tmux = f"{prefix} && {server_cmd}"
 
         command_to_run_in_tmux = f"bash -i -c '{command_to_run_in_tmux}'"
 

@@ -163,10 +163,13 @@ def run_experiment_and_write_results_actual(
     optimizer_config = optimizers[opt_idx][1]
     benchmark = benchmark_meta.benchmark()
 
-    optimizer_config.langProBe_configs['launch_arbor'] = False
+    should_launch_arbor = bool(
+        optimizer_config
+        and optimizer_config.langProBe_configs.get("launch_arbor", False)
+    )
 
     # Handle {portnum} placeholder when not launching arbor
-    if "{portnum}" in lm_config.get("api_base", ""):
+    if "{portnum}" in lm_config.get("api_base", "") and not should_launch_arbor:
         # Use the port from environment variable or default to 8000
         vllm_port = os.environ.get("VLLM_PORT", "8000")
         lm_config["api_base"] = lm_config["api_base"].format(portnum=vllm_port)
@@ -238,15 +241,15 @@ def run_experiment_and_write_results_actual(
         if optimizer_config is not None and "launch_arbor" in optimizer_config.langProBe_configs and optimizer_config.langProBe_configs["launch_arbor"]:
             from gepa_artifact.utils.arbor_runner import ArborRunner
             if "GRPO" in optim_name:
-                arbor_config_file_path = os.path.join(os.getcwd(), "utils/arbor/arbor_train.yaml")
+                arbor_config_file_path = os.path.join(os.getcwd(), "gepa_artifact/utils/arbor/arbor_train.yaml")
                 num_gpus = 3
             else:
                 import torch
                 num_gpus = torch.cuda.device_count()
                 if num_gpus == 4:
-                    arbor_config_file_path = os.path.join(os.getcwd(), "utils/arbor/arbor_inference.yaml")
+                    arbor_config_file_path = os.path.join(os.getcwd(), "gepa_artifact/utils/arbor/arbor_inference.yaml")
                 elif num_gpus == 2:
-                    arbor_config_file_path = os.path.join(os.getcwd(), "utils/arbor/arbor_inference_2_gpus.yaml")
+                    arbor_config_file_path = os.path.join(os.getcwd(), "gepa_artifact/utils/arbor/arbor_inference_2_gpus.yaml")
                 else:
                     raise ValueError(f"Number of GPUs {num_gpus} not supported")
 
