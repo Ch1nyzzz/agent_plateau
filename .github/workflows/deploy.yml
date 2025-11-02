@@ -19,7 +19,7 @@ jobs:
           python-version: 3.x
       - name: Install dependencies
         run: |
-          pip install mkdocs-material
+          pip install mkdocs-material python-markdown-math
       - name: Build and deploy
         run: |
           mkdocs gh-deploy --force
