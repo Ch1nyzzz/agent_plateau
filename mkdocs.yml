@@ -22,4 +22,4 @@ markdown_extensions:
       permalink: true
   - footnotes
   - tables
-  - mathjax
+  - mdx_math
