@@ -25,7 +25,8 @@ from .gepa_utils import (
     log_detailed_metrics_after_discovering_new_program,
     initialize_gepa_state,
     initialize_wandb,
-    find_dominator_programs
+    find_dominator_programs,
+    convert_evaluation_result_to_tuple
 )
 
 from .merge_programs import (
@@ -234,11 +235,13 @@ class GEPA(dspy.teleprompt.teleprompt.Teleprompter):
 
         # Calculate metrics for new program and update gepa state
         if self.track_scores_on == 'train_val':
-            trainset_score, trainset_outputs, trainset_subscores = trainset_evaluator(new_program)
+            trainset_result = trainset_evaluator(new_program)
+            trainset_score, trainset_outputs, trainset_subscores = convert_evaluation_result_to_tuple(trainset_result)
         else:
             assert self.track_scores_on == 'val', "track_scores_on should be either 'val' or 'train_val'. You set track_scores_on={}".format(self.track_scores_on)
             trainset_score, trainset_outputs, trainset_subscores = None, None, None
-        valset_score, valset_outputs, valset_subscores = valset_evaluator(new_program)
+        valset_result = valset_evaluator(new_program)
+        valset_score, valset_outputs, valset_subscores = convert_evaluation_result_to_tuple(valset_result)
 
         # We have run one full eval of the new program on train set and val set
         gepa_state.num_full_ds_evals += 1
@@ -302,7 +305,6 @@ class GEPA(dspy.teleprompt.teleprompt.Teleprompter):
             metric=self.metric_fn,
             num_threads=self.num_threads,
             return_all_scores=True,
-            return_outputs=True,
             failure_score=self.failure_score,
             provide_traceback=True,
             max_errors=len(trainset) * 100  # Allow for many errors in the training set
@@ -319,7 +321,6 @@ class GEPA(dspy.teleprompt.teleprompt.Teleprompter):
             metric=self.metric_fn,
             num_threads=self.num_threads,
             return_all_scores=True,
-            return_outputs=True,
             failure_score=self.failure_score,
             provide_traceback=True,
             max_errors=len(valset) * 100  # Allow for many errors in the validation set
@@ -436,12 +437,12 @@ class GEPA(dspy.teleprompt.teleprompt.Teleprompter):
 
                         subsample_evaluator_args = {**trainset_evaluator.__dict__}
                         subsample_evaluator_args['devset'] = mini_devset
-                        subsample_evaluator_args['return_outputs'] = True
                         subsample_evaluator_args['return_all_scores'] = True
                         subsample_evaluator_args['max_errors'] = len(subsample_ids) * 100
                         subsample_evaluator = dspy.Evaluate(**subsample_evaluator_args)
 
-                        new_program_subsample_scores = subsample_evaluator(new_program)[2]
+                        new_program_subsample_result = subsample_evaluator(new_program)
+                        _, _, new_program_subsample_scores = convert_evaluation_result_to_tuple(new_program_subsample_result)
 
                         id1_subsample_score = sum(id1_subsample_scores)
                         id2_subsample_score = sum(id2_subsample_scores)
@@ -569,11 +570,11 @@ class GEPA(dspy.teleprompt.teleprompt.Teleprompter):
 
                 subsample_evaluator_args = {**trainset_evaluator.__dict__}
                 subsample_evaluator_args['devset'] = [trainset[i] for i in subsample_ids]
-                subsample_evaluator_args['return_outputs'] = True
                 subsample_evaluator_args['return_all_scores'] = True
                 subsample_evaluator_args['max_errors'] = len(subsample_ids) * 100
                 subsample_evaluator = dspy.Evaluate(**subsample_evaluator_args)
-                new_subsample_scores = subsample_evaluator(new_program)[2]
+                new_subsample_result = subsample_evaluator(new_program)
+                _, _, new_subsample_scores = convert_evaluation_result_to_tuple(new_subsample_result)
                 new_subsample_score = sum(new_subsample_scores)
 
                 gepa_state.full_program_trace[-1]['new_subsample_scores'] = new_subsample_scores

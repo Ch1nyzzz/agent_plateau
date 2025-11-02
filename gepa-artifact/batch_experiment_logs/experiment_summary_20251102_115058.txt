@@ -1,0 +1,41 @@
+============================================================
+实验结果摘要
+生成时间: 2025-11-02 16:19:18
+============================================================
+
+
+HotpotQABench
+------------------------------------------------------------
+
+[7] GEPA-5
+  状态: success
+  耗时: 1655.4s
+  结果: Average Metric: 120 / 300 (40.0%)
+  日志: batch_experiment_logs/exp_7_HotpotQABench_HotpotMultiHop_GEPA-5_20251102_115058.log
+
+[8] GEPA-10
+  状态: success
+  耗时: 3741.6s
+  结果: Average Metric: 115 / 300 (38.3%)
+  日志: batch_experiment_logs/exp_8_HotpotQABench_HotpotMultiHop_GEPA-10_20251102_115058.log
+
+[9] GEPA-15
+  状态: success
+  耗时: 5026.6s
+  结果: Average Metric: 119 / 300 (39.7%)
+  日志: batch_experiment_logs/exp_9_HotpotQABench_HotpotMultiHop_GEPA-15_20251102_115058.log
+
+[10] GEPA-20
+  状态: success
+  耗时: 5676.2s
+  结果: Average Metric: 126 / 300 (42.0%)
+  日志: batch_experiment_logs/exp_10_HotpotQABench_HotpotMultiHop_GEPA-20_20251102_115058.log
+
+============================================================
+统计信息
+============================================================
+总实验数: 4
+成功: 4
+失败: 0
+错误: 0
+总耗时: 4.47h

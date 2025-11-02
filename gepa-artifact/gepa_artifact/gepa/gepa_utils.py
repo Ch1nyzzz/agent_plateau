@@ -16,6 +16,33 @@ from dspy.teleprompt.bootstrap_trace import FailedPrediction
 
 from .entropy_utils import remove_dominated_programs
 
+def convert_evaluation_result_to_tuple(eval_result):
+    """
+    将 DSPy 3.0+ 的 EvaluationResult 对象转换为旧的元组格式 (score, outputs, scores)
+
+    Args:
+        eval_result: DSPy 3.0+ 的 EvaluationResult 对象
+
+    Returns:
+        tuple: (aggregated_score, outputs, all_scores)
+            - aggregated_score: 整体分数 (float)
+            - outputs: 预测结果列表
+            - all_scores: 每个样本的分数列表
+    """
+    # 检查是否已经是元组格式（向后兼容）
+    if isinstance(eval_result, tuple):
+        return eval_result
+
+    # 从 EvaluationResult 对象中提取信息
+    # eval_result.score 是整体分数
+    # eval_result.results 是 [(example, prediction, score), ...] 列表
+
+    aggregated_score = eval_result.score
+    outputs = [prediction for _, prediction, _ in eval_result.results]
+    all_scores = [score for _, _, score in eval_result.results]
+
+    return aggregated_score, outputs, all_scores
+
 class GEPAState:
     program_candidates: list[dspy.Module]
     parent_program_for_candidate: list[list[int | None]]
@@ -363,10 +390,12 @@ def capture_module_trace_with_feedback(
     return ret, sum(subscores), subscores
 
 def write_eval_output_to_directory(eval_out, output_dir):
-    for task_idx, score in enumerate(eval_out[2]):
+    # 转换为元组格式以兼容新的 DSPy API
+    _, outputs, scores = convert_evaluation_result_to_tuple(eval_out)
+    for task_idx, score in enumerate(scores):
         os.makedirs(os.path.join(output_dir, f"task_{task_idx}"), exist_ok=True)
         with open(os.path.join(output_dir, f"task_{task_idx}", f"iter_{0}_prog_0.json"), 'w') as f:
-            json.dump(eval_out[1][task_idx], f, indent=4, default=json_default)
+            json.dump(outputs[task_idx], f, indent=4, default=json_default)
 
 def initialize_wandb(wandb_api_key: str = None, run_dir: str = None):
     try:
@@ -397,6 +426,7 @@ def initialize_gepa_state(gepa_state_to_use, run_dir, logger, base_dspy_program,
             if track_scores_on == 'train_val':
                 try:
                     eval_out = trainset_evaluator(base_dspy_program)
+                    eval_out = convert_evaluation_result_to_tuple(eval_out)
                     num_evals_run += len(eval_out[2])
                 except Exception as e:
                     logger.log(f"Exception during eval: {e}")
@@ -407,6 +437,7 @@ def initialize_gepa_state(gepa_state_to_use, run_dir, logger, base_dspy_program,
                 eval_out = (None, [], [])
 
             valset_out = valset_evaluator(base_dspy_program)
+            valset_out = convert_evaluation_result_to_tuple(valset_out)
             write_eval_output_to_directory(valset_out, os.path.join(run_dir, "generated_best_outputs_valset"))
             num_evals_run += len(valset_out[2])
 

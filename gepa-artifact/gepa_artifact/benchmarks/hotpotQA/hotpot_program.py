@@ -40,7 +40,7 @@ class HotpotMultiHop(dspy_program.LangProBeDSPyMetaProgram, dspy.Module):
 
 def answer_match_fn(prediction, answers, frac=1.0):
     """Returns True if the prediction matches any of the answers."""
-    from dspy.dsp.utils import EM, F1
+    from dspy.evaluate.metrics import EM, F1
 
     if frac >= 1.0:
         return EM(prediction, answers)

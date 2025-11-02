@@ -1,3 +1,7 @@
+import os
+# 强制 JAX 使用 CPU，避免 CuDNN 版本不匹配问题
+os.environ['JAX_PLATFORMS'] = 'cpu'
+
 from pathlib import Path
 
 BASE_EXPERIMENT_DIR = str((Path(__file__).parent.parent / "experiment_runs_data").resolve())
@@ -33,23 +37,23 @@ TRAIN_KWARGS_GRPO_QWEN = {**TRAIN_KWARGS_GRPO_DEFAULT}
 
 # Add/modify available LMs here.
 LM_CONFIGS = [
-    {
-        "name": "qwen3-8b",
-        "model": "openai/arbor:qwen/qwen3-8b",
-        "api_key": "API_KEY",
-        "api_base": "http://localhost:{portnum}/v1/",
-        "temperature": 0.6,
-        "top_p": 0.95,
-        "top_k": 20,
-        "launch_kwargs": LAUNCH_KWARGS,
-        "train_kwargs": TRAIN_KWARGS_GRPO_QWEN,
-    },
     # {
-    #     "name": "gpt-41-mini",
-    #     "model": "openai/gpt-4.1-mini-2025-04-14",
-    #     "api_key": "env:OPENAI_API_KEY",
-    #     "temperature": 1.0,
+    #     "name": "qwen3-8b",
+    #     "model": "openai/arbor:qwen/qwen3-8b",
+    #     "api_key": "API_KEY",
+    #     "api_base": "http://localhost:{portnum}/v1/",
+    #     "temperature": 0.6,
+    #     "top_p": 0.95,
+    #     "top_k": 20,
+    #     "launch_kwargs": LAUNCH_KWARGS,
+    #     "train_kwargs": TRAIN_KWARGS_GRPO_QWEN,
     # },
+    {
+        "name": "gpt-41-mini",
+        "model": "openai/gpt-4.1-mini-2025-04-14",
+        "api_key": "env:OPENAI_API_KEY",
+        "temperature": 1.0,
+    },
 ]
 
 def get_benchmarks():
@@ -71,7 +75,7 @@ def get_optimizers():
     from dspy.teleprompt.grpo import GRPO
     from gepa_artifact.utils.optimizers import OptimizerConfig
     optimizers = [
-        ("Baseline", 
+        ("Baseline",
             OptimizerConfig(
                 optimizer=None,
                 init_args={},
@@ -83,102 +87,123 @@ def get_optimizers():
             )
         ),
         (
-            "MIPROv2-Heavy", 
+            "GEPA-5",
             OptimizerConfig(
-                optimizer=dspy.teleprompt.MIPROv2,
-                init_args=dict(auto="heavy", max_errors=10000),
-                compile_args=dict(
-                    requires_permission_to_run=False,
+                optimizer=GEPA,
+                init_args=dict(
+                    run_linearized_gepa=False,
+                    use_merge=False,
+                    set_for_merge_minibatch='val',
+                    track_scores_on='val',
+                    num_iters=5,
                 ),
+                compile_args=dict(),
                 langProBe_configs=dict(
                     use_valset=True,
-                    save_candidate_score=True,
-                    provide_logdir_in_init=True,
-                    add_max_errors_to_initargs=True,
                     launch_arbor=True,
                     use_cache_from_opt="Baseline",
                 ),
-                name="MIPROv2-Heavy",
+                name="GEPA-5",
             )
         ),
         (
-            "GEPA-MERGE",
+            "GEPA-10",
             OptimizerConfig(
                 optimizer=GEPA,
-                init_args=dict(run_linearized_gepa=False, use_merge=True, set_for_merge_minibatch='val', track_scores_on='val'),
-                compile_args=dict(),
-                langProBe_configs=dict(
-                    use_valset=True,
-                    add_max_metric_calls=True,
-                    max_metric_calls_source_opt_name="MIPROv2-Heavy",
-                    launch_arbor=True,
-                    use_cache_from_opt="MIPROv2-Heavy",
-                ),
-                name="GEPA-MERGE",
-            )
-        ),
-        (
-            "GEPA",
-            OptimizerConfig(
-                optimizer=GEPA,
-                init_args=dict(run_linearized_gepa=False, use_merge=False, set_for_merge_minibatch='val', track_scores_on='val'),
-                compile_args=dict(),
-                langProBe_configs=dict(
-                    use_valset=True,
-                    add_max_metric_calls=True,
-                    max_metric_calls_source_opt_name="MIPROv2-Heavy",
-                    launch_arbor=True,
-                    use_cache_from_opt="MIPROv2-Heavy",
-                ),
-                name="GEPA",
-            )
-        ),
-        (
-            "Abl-SelectBestCandidate",
-            OptimizerConfig(
-                optimizer=GEPA,
-                init_args=dict(run_linearized_gepa=True, use_merge=False, set_for_merge_minibatch='val', track_scores_on='val'),
-                compile_args=dict(),
-                langProBe_configs=dict(
-                    use_valset=True,
-                    add_max_metric_calls=True,
-                    max_metric_calls_source_opt_name="MIPROv2-Heavy",
-                    launch_arbor=True,
-                    use_cache_from_opt="MIPROv2-Heavy",
-                ),
-                name="Abl-SelectBestCandidate",
-            )
-        ),
-        (
-            "GRPO",
-            OptimizerConfig(
-                optimizer=GRPO,
                 init_args=dict(
-                    multitask=True,
-                    exclude_demos=False,
-                    num_train_steps=500,
-                    num_threads=25,
-                    use_train_as_val=False,
-                    num_steps_for_val=20,
-                    sampling_temperature=SAMPLING_TEMPERATURE,
-                    num_dspy_examples_per_grpo_step=4,
-                    num_rollouts_per_grpo_step=12,
-                    grpo_group_size=12,
-                    report_train_scores=False,
-                    variably_invoked_predictor_grouping_mode="fill",
-                    variably_invoked_predictor_fill_strategy="randint",
-                    max_context_length=MAX_CONTEXT_LENGTH_TRAINING,
+                    run_linearized_gepa=False,
+                    use_merge=False,
+                    set_for_merge_minibatch='val',
+                    track_scores_on='val',
+                    num_iters=10,
                 ),
                 compile_args=dict(),
                 langProBe_configs=dict(
                     use_valset=True,
-                    add_valset_to_trainset=False,
-                    use_model_name_from_optimized_program=True,
-                    set_lm_before_optimizer=True,
                     launch_arbor=True,
-                    add_wandb_configs_to_initargs=True,
+                    use_cache_from_opt="Baseline",
                 ),
-                name="GRPO",
+                name="GEPA-10",
+            )
+        ),
+        (
+            "GEPA-15",
+            OptimizerConfig(
+                optimizer=GEPA,
+                init_args=dict(
+                    run_linearized_gepa=False,
+                    use_merge=False,
+                    set_for_merge_minibatch='val',
+                    track_scores_on='val',
+                    num_iters=15,
+                ),
+                compile_args=dict(),
+                langProBe_configs=dict(
+                    use_valset=True,
+                    launch_arbor=True,
+                    use_cache_from_opt="Baseline",
+                ),
+                name="GEPA-15",
+            )
+        ),
+        (
+            "GEPA-20",
+            OptimizerConfig(
+                optimizer=GEPA,
+                init_args=dict(
+                    run_linearized_gepa=False,
+                    use_merge=False,
+                    set_for_merge_minibatch='val',
+                    track_scores_on='val',
+                    num_iters=20,
+                ),
+                compile_args=dict(),
+                langProBe_configs=dict(
+                    use_valset=True,
+                    launch_arbor=True,
+                    use_cache_from_opt="Baseline",
+                ),
+                name="GEPA-20",
+            )
+        ),
+        (
+            "GEPA-25",
+            OptimizerConfig(
+                optimizer=GEPA,
+                init_args=dict(
+                    run_linearized_gepa=False,
+                    use_merge=False,
+                    set_for_merge_minibatch='val',
+                    track_scores_on='val',
+                    num_iters=25,
+                ),
+                compile_args=dict(),
+                langProBe_configs=dict(
+                    use_valset=True,
+                    launch_arbor=True,
+                    use_cache_from_opt="Baseline",
+                ),
+                name="GEPA-25",
+            )
+        ),
+        (
+            "GEPA-50",
+            OptimizerConfig(
+                optimizer=GEPA,
+                init_args=dict(
+                    run_linearized_gepa=False,
+                    use_merge=False,
+                    set_for_merge_minibatch='val',
+                    track_scores_on='val',
+                    num_iters=50,
+                ),
+                compile_args=dict(),
+                langProBe_configs=dict(
+                    use_valset=True,
+                    launch_arbor=True,
+                    use_cache_from_opt="Baseline",
+                ),
+                name="GEPA-50",
             )
         ),
     ]

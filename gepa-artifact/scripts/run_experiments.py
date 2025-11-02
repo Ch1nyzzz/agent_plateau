@@ -63,7 +63,7 @@ def create_lm(lm_config):
     provider = ArborProvider() if "openai/arbor" in config['model'] else None
     fixed_config = {
         "max_tokens": 16384,  # overriding the dspy defaults
-        "num_retries": 0,
+        "num_retries": 10,  # 增加重试次数以处理速率限制
         "provider": provider,
     }
     config = {k:v for k, v in config.items() if k != "name"}
@@ -260,8 +260,10 @@ def run_experiment_and_write_results_actual(
             arbor_runner_context = ArborRunner(arbor_config["config_filepath"], arbor_config["portnum"], runs_dir)
             arbor_runner_context.__enter__()
 
-            assert "{portnum}" in lm_config["api_base"]
-            lm_config["api_base"] = lm_config["api_base"].format(portnum=arbor_config["portnum"])
+            # 只有当 api_base 存在且包含 {portnum} 占位符时才替换
+            # 远程 API 模型（如 gpt-41-mini）不需要 api_base
+            if "api_base" in lm_config and "{portnum}" in lm_config["api_base"]:
+                lm_config["api_base"] = lm_config["api_base"].format(portnum=arbor_config["portnum"])
 
         metric_counter = CounterWithLock()
 
