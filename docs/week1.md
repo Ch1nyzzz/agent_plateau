@@ -41,7 +41,7 @@ Initial candidates:
    - Iteration count could be a candidate, but its definition varies across frameworks.
    - The GEPA paper uses *rollouts* as its metric, but rollout semantics differ by architecture or task.
 
-2. **Number of metric evaluations** may serve as a better scaling indicator. For example:
+2. **Number of metric evaluations** may serve as a better scaling indicator. Because sel-evolving agent should always contain metrics calling function. It can be used for comparing different agent structure. The metric calling func looks like:
 
    ```python
    def one_metric_call(program, example):
