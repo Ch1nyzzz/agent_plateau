@@ -41,11 +41,9 @@
 2. **Number of metric evaluations** may serve as a better scaling indicator. For example:
 
    ```python
-   def one_metric_call(program, example):
-       output = program(example.question)  # may internally call GPT 2–3 times
-
-       # Step 2: Evaluate the result (possibly another GPT API call)
-       score = metric_fn(example, output)  # may call GPT once more
-
-       return score  # counted as 1 metric call
+        def one_metric_call(program, example):
+            output = program(example.question)  # may internally call GPT 2–3 times
+            # Step 2: Evaluate the result (possibly another GPT API call)
+            score = metric_fn(example, output)  # may call GPT once more
+            return score  # counted as 1 metric call
    ```
