@@ -14,10 +14,49 @@ nav:
   - Weekly Reports:
       - Week 1: week1.md
 markdown_extensions:
-  - admonition
-  - codehilite
-  - toc:
-      permalink: true
-  - footnotes
-  - tables
-  - mdx_math
+  # Python Markdown 核心扩展
+  - abbr                    # 缩写支持
+  - admonition              # 警告框/提示框
+  - attr_list               # 为元素添加 HTML 属性
+  - def_list                # 定义列表
+  - footnotes               # 脚注
+  - md_in_html              # 在 HTML 中使用 Markdown
+  - toc:                    # 目录
+      permalink: true       # 添加永久链接
+      toc_depth: 3          # 目录深度
+  - tables                  # 表格（默认已启用，但明确声明更好）
+
+  # PyMdown Extensions (Material 主题推荐)
+  - pymdownx.arithmatex:    # 数学公式支持 (LaTeX)
+      generic: true
+  - pymdownx.betterem:      # 改进的斜体/粗体处理
+      smart_enable: all
+  - pymdownx.caret          # 上标和插入文本 (^上标^ ^^插入^^)
+  - pymdownx.mark           # 高亮文本 (==高亮==)
+  - pymdownx.tilde          # 删除线和下标 (~下标~ ~~删除~~)
+  - pymdownx.critic         # 批注/修订标记
+  - pymdownx.details        # 可折叠的详情块
+  - pymdownx.emoji:         # Emoji 支持
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - pymdownx.highlight:     # 代码高亮（替代 codehilite）
+      anchor_linenums: true # 行号锚点
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.superfences:   # 增强的代码块（支持嵌套、图表等）
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.inlinehilite   # 行内代码高亮
+  - pymdownx.keys           # 键盘按键显示 (++ctrl+alt+del++)
+  - pymdownx.smartsymbols   # 智能符号转换
+  - pymdownx.tabbed:        # 标签页
+      alternate_style: true
+  - pymdownx.tasklist:      # 任务列表
+      custom_checkbox: true # 美化复选框
+
+# 额外的 JavaScript 支持（用于数学公式渲染）
+extra_javascript:
+  - https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6
+  - https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js
