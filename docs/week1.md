@@ -48,3 +48,15 @@
        return score  # counted as 1 metric call
    ```
 
+## 3. Current Issue
+
+At present, I’m encountering a resource access issue on the **Helios4** cluster.  
+It appears that the nodes are continuously occupied by other lab members, making it extremely difficult to find an available time slot for running experiments.  
+Currently, the experiments on the two benchmarks are being conducted using my personal OpenAI API key, but this setup is not sustainable for continued large-scale experimentation.
+
+Therefore, I would like to ask:
+- Whether it’s possible to **grant access to additional compute nodes**, or  
+- If there exists a **dashboard or monitoring tool** to better visualize GPU availability and idle times.
+
+Adam kindly provided me with access credentials for **Helios3**, but for some reason, I still haven’t been able to log in successfully.  
+He might be quite busy these days, so the issue hasn’t been resolved yet.
