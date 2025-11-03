@@ -31,19 +31,19 @@
 
 ### Conclusions
 
-1. **Costs remain roughly constant while performance improves with more iterations.**  
-   (GEPA-10/15/20 show similar API spending, but performance continues to increase.)  
-   - The number of external API calls increases, but **total output tokens do not rise significantly**.  
-   - Token usage or monetary cost are therefore not reliable scaling metrics.  
-   - Iteration count could be a candidate, but its definition varies across frameworks.  
-   - The GEPA paper uses *rollouts* as its metric, but rollout semantics differ by architecture or task (some require 4 rollouts per update, others 5).
+1. **Costs remain roughly constant while performance improves with more iterations.**
+   - GEPA-10/15/20 show similar API spending, but performance continues to increase.
+   - The number of external API calls increases, but **total output tokens do not rise significantly**.
+   - Iteration count could be a candidate, but its definition varies across frameworks.
+   - The GEPA paper uses *rollouts* as its metric, but rollout semantics differ by architecture or task.
 
-2. **Number of metric evaluations** may serve as a better scaling indicator. For example:
+1. **Number of metric evaluations** may serve as a better scaling indicator. For example:
 
-   ```python
-        def one_metric_call(program, example):
-            output = program(example.question)  # may internally call GPT 2–3 times
-            # Step 2: Evaluate the result (possibly another GPT API call)
-            score = metric_fn(example, output)  # may call GPT once more
-            return score  # counted as 1 metric call
-   ```
+    ```python
+    def one_metric_call(program, example):
+        output = program(example.question)  # may internally call GPT 2–3 times
+        # Step 2: Evaluate the result (possibly another GPT API call)
+        score = metric_fn(example, output)  # may call GPT once more
+        return score  # counted as 1 metric call
+    ```
+
