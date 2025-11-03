@@ -34,14 +34,14 @@ Initial candidates:
 
 ### Conclusions
 
-1. **Costs remain roughly constant while performance improves with more iterations.**
+#### **Costs remain roughly constant while performance improves with more iterations.**
 
    - GEPA-10/15/20 show similar API spending, but performance continues to increase.
    - The number of external API calls increases, but **total output tokens do not rise significantly**.
    - Iteration count could be a candidate, but its definition varies across frameworks.
    - The GEPA paper uses *rollouts* as its metric, but rollout semantics differ by architecture or task.
 
-2. **Number of metric evaluations** may serve as a better scaling indicator. Because sel-evolving agent should always contain metrics calling function. It can be used for comparing different agent structure. The metric calling func looks like:
+#### **Number of metric evaluations** may serve as a better scaling indicator. Because sel-evolving agent should always contain metrics calling function. It can be used for comparing different agent structure. The metric calling func looks like:
 
    ```python
    def one_metric_call(program, example):
