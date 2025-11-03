@@ -366,6 +366,21 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="1. Background and Objective">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-key-question-how-should-we-define-the-horizontal-axis-for-scaling" class="md-nav__link">
+    <span class="md-ellipsis">
+      The key question: how should we define the horizontal axis for scaling?
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -407,6 +422,15 @@
         
       </ul>
     </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-current-issue" class="md-nav__link">
+    <span class="md-ellipsis">
+      3. Current Issue
+    </span>
+  </a>
   
 </li>
       
@@ -457,6 +481,21 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="1. Background and Objective">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-key-question-how-should-we-define-the-horizontal-axis-for-scaling" class="md-nav__link">
+    <span class="md-ellipsis">
+      The key question: how should we define the horizontal axis for scaling?
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -501,6 +540,15 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#3-current-issue" class="md-nav__link">
+    <span class="md-ellipsis">
+      3. Current Issue
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -522,11 +570,13 @@
 <h2 id="1-background-and-objective">1. Background and Objective<a class="headerlink" href="#1-background-and-objective" title="Permanent link">&para;</a></h2>
 <ul>
 <li>We aim to compare <strong>self-evolving/self-optimizing systems</strong> (GEPA, ACE) under different levels of <em>inner-loop search/evaluation intensity</em>, focusing on their <strong>performance–cost–compute scaling behavior</strong>.</li>
-<li>The key question: <em>how should we define the horizontal axis for scaling?</em></li>
-<li>Initial candidates:</li>
-<li>Number of rollouts  </li>
-<li>Number of iterations  </li>
-<li>Token usage  </li>
+</ul>
+<h3 id="the-key-question-how-should-we-define-the-horizontal-axis-for-scaling">The key question: <em>how should we define the horizontal axis for scaling?</em><a class="headerlink" href="#the-key-question-how-should-we-define-the-horizontal-axis-for-scaling" title="Permanent link">&para;</a></h3>
+<p>Initial candidates:</p>
+<ul>
+<li>Number of rollouts</li>
+<li>Number of iterations</li>
+<li>Token usage</li>
 <li>Total cost (USD)</li>
 </ul>
 <hr />
@@ -561,6 +611,17 @@
 </span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    <span class="n">score</span> <span class="o">=</span> <span class="n">metric_fn</span><span class="p">(</span><span class="n">example</span><span class="p">,</span> <span class="n">output</span><span class="p">)</span>  <span class="c1"># may call GPT once more</span>
 </span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    <span class="k">return</span> <span class="n">score</span>  <span class="c1"># counted as 1 metric call</span>
 </span></code></pre></div>
+<h2 id="3-current-issue">3. Current Issue<a class="headerlink" href="#3-current-issue" title="Permanent link">&para;</a></h2>
+<p>At present, I’m encountering a resource access issue on the <strong>Helios4</strong> cluster.<br />
+It appears that the nodes are continuously occupied by other lab members, making it extremely difficult to find an available time slot for running experiments.<br />
+Currently, the experiments on the two benchmarks are being conducted using my personal OpenAI API key, but this setup is not sustainable for continued large-scale experimentation.</p>
+<p>Therefore, I would like to ask:</p>
+<ul>
+<li>Whether it's possible to <strong>grant access to additional compute nodes</strong>, or</li>
+<li>If there exists a <strong>dashboard or monitoring tool</strong> to better visualize GPU availability and idle times.</li>
+</ul>
+<p>Adam kindly provided me with access credentials for <strong>Helios3</strong>, but for some reason, I still haven’t been able to log in successfully.<br />
+He might be quite busy these days, so the issue hasn’t been resolved yet.</p>
 
 
 

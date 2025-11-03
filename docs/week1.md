@@ -1,12 +1,15 @@
 ## 1. Background and Objective
 
 - We aim to compare **self-evolving/self-optimizing systems** (GEPA, ACE) under different levels of *inner-loop search/evaluation intensity*, focusing on their **performance–cost–compute scaling behavior**.
-- The key question: *how should we define the horizontal axis for scaling?*
-- Initial candidates:
-  - Number of rollouts  
-  - Number of iterations  
-  - Token usage  
-  - Total cost (USD)
+
+### The key question: *how should we define the horizontal axis for scaling?*
+
+Initial candidates:
+
+- Number of rollouts
+- Number of iterations
+- Token usage
+- Total cost (USD)
 
 ---
 
@@ -55,7 +58,8 @@ It appears that the nodes are continuously occupied by other lab members, making
 Currently, the experiments on the two benchmarks are being conducted using my personal OpenAI API key, but this setup is not sustainable for continued large-scale experimentation.
 
 Therefore, I would like to ask:
-- Whether it’s possible to **grant access to additional compute nodes**, or  
+
+- Whether it's possible to **grant access to additional compute nodes**, or
 - If there exists a **dashboard or monitoring tool** to better visualize GPU availability and idle times.
 
 Adam kindly provided me with access credentials for **Helios3**, but for some reason, I still haven’t been able to log in successfully.  
