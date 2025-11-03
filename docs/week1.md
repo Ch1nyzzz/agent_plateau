@@ -16,16 +16,16 @@
 
 **Evaluation Datasets:** HotpotQA, HoVer (consistent with default script settings)
 
-![Performance Scaling](../gepa-artifact/experiment_runs_data/experiment_figures/performance_scaling.png)
+![Performance Scaling](images/performance_scaling.png)
 
 ### Cost Scaling
 
-![Cost Scaling](../gepa-artifact/experiment_runs_data/experiment_figures/cost_scaling.png)
+![Cost Scaling](images/cost_scaling.png)
 
 
 ### Performance-Cost Tradeoff
 
-![Performance-Cost Tradeoff](../gepa-artifact/experiment_runs_data/experiment_figures/performance_cost_tradeoff.png)
+![Performance-Cost Tradeoff](images/performance_cost_tradeoff.png)
 
 
 
@@ -48,3 +48,4 @@
        score = metric_fn(example, output)  # may call GPT once more
 
        return score  # counted as 1 metric call
+   ```
